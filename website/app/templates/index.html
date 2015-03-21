@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="animate absolute-center-wrapper" id="loading-icon">
+  <div class="absolute-center">
+    <i class="glyphicon glyphicon-refresh animate spin"></i>
+  </div>
+</div>
+
+<div class="animate container-fluid" id="splash">
+    <div class="row">
+        <div class="col-sm-12 col-xs-12 col-md-4 col-md-offset-4 text-center vertical-center" id="splash-content">
+        	<img class="img-responsive" src="/static/assets/img/logo.png" />
+            <h1>HyperLoon</h1>
+            <a href="/dashboard"><button class="fat btn btn-lg btn-success top-buffer">Enter</button></a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

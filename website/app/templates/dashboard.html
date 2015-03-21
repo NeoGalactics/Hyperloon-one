@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<script type="text/javascript">
+
+    app = angular.module("hyperloon", []);
+
+    app.controller("core", ["$scope", "$interval", "$http", function($scope, $interval, $http){
+        $scope.coordinates = [
+                              ["40.737102","-73.990318"], 
+                              // ["40.749825","-73.987963"], 
+                              // ["40.752946","-73.987384"], 
+                              // ["40.755823","-73.986397"]
+                             ];
+        $scope.onKeyup = function (evt, val) {
+                if(evt.keyCode === 40) {
+                    --$scope[val];
+                    console.log("decrementing val");
+                } else if (evt.keyCode === 38) {
+                    ++$scope[val]
+                    console.log("incrementing val");
+                }
+            };
+
+        $scope.onKeyupCoordinates = function(evt, val) {
+            if(evt.keyCode === 40) --$scope.coordinates[0][val];
+            else if (evt.keyCode === 38) ++scope.coordinates[0][val];
+        };
+        $scope.zoom = 18;
+        $scope.time = 0;
+        $scope.mapParameters = function() {
+                                   return "zoom=" + $scope.zoom + "&" +
+                                   "center=" + $scope.coordinates[$scope.coordinates.length - 1] + "&" + 
+                                   "size=640x640" + "&" + 
+                                   "markers=color:blue" + "|" + 
+                                   "" + "|" + $scope.coordinates[$scope.coordinates.length - 1] + "&" + 
+                                   "path=color:0x000000ff|weight:5|" + $scope.coordinates.join("|");
+                               };
+       $scope.streamStatus = false;
+       $scope.gps = getInfo("gps") || getLocation() || "30.444836199999997,-84.2996848";
+       $scope.temperature = getInfo("temperature") || 0;
+       $scope.wind = getInfo("wind") || 0;
+       $scope.barometer = getInfo("barometer") || 0;
+
+       $scope.stopStream = stopStream;
+       $scope.startStream = startStream;
+
+       function getLocation() {
+           if (navigator.geolocation) {
+               return navigator.geolocation.getCurrentPosition(showPosition);
+           }
+       }
+       function showPosition(position) {
+           $scope.coordinates[0][0] = position.coords.latitude
+           $scope.coordinates[0][1] = position.coords.longitude;
+           $scope.$apply();
+       }
+
+       function startStream(){
+          $http.post('http://172.20.10.8/start_stream', {}).
+            success(function(data, status, headers, config) {
+              var status_refresh = $interval(function() {
+                  $scope.time++;
+                  $scope.coordinates.push($scope.gps.replace(", ", ","))
+                  console.log(getLocation());
+              }, 1000);
+              $scope.streamStatus = true;
+            }).
+            error(function(data, status, headers, config) {
+              // if(stream_refresh) stream_refresh.cancel();
+              var status_refresh = $interval(function() {
+                  $scope.time++;
+                  $scope.coordinates.push($scope.gps.replace(", ", ","))
+              }, 1000);
+              $scope.streamStatus = true;
+              // $scope.streamStatus = false;
+            });
+       }
+
+       function stopStream(){
+          $http.post('http://172.20.10.8/stop_stream', {}).
+            success(function(data, status, headers, config) {
+              stream_refresh.cancel();
+              $scope.streamStatus = false;
+            }).
+            error(function(data, status, headers, config) {
+              stream_refresh.cancel();
+              $scope.streamStatus = true;
+            });
+       }
+
+       function getInfo (metric) {
+         $http.get('http://172.20.10.8/' + metric, {}).
+          success(function(data, status, headers, config){
+            $scope[metric] = data;
+          }).
+          error(function(data, status, headers, config){
+            console.log('error getting ' + metric);
+          })
+       }
+
+       $scope.zoomIn = function(){
+        if ($scope.zoom < 22) $scope.zoom++;
+       }
+
+       $scope.zoomOut = function(){
+        if ($scope.zoom > 1) $scope.zoom--;
+       }
+
+       function activate(){
+         getLocation();
+         startStream();
+       }
+
+       activate();
+    }]);
+
+    app.config(['$interpolateProvider', function($interpolateProvider) {
+      $interpolateProvider.startSymbol('{[');
+      $interpolateProvider.endSymbol(']}');
+    }]);
+</script>
+
+<div class="absolute-center-wrapper" id="loading-icon">
+  <div class="absolute-center">
+    <i class="glyphicon glyphicon-refresh animate spin"></i>
+  </div>
+</div>
+
+<div class="container-fluid nomargin nopad very-tall very-fat" ng-app="hyperloon">
+    <div ng-controller="core">
+          <div class="container">
+              <div class="row">
+                  <!-- Card Projects -->
+                  <div class="col-md-6">
+                      <div class="card">
+                          <div class="card-image">
+                              <img class="img-responsive" src="https://maps.googleapis.com/maps/api/staticmap?{[ mapParameters() ]}">
+                              <span class="card-title">
+                                <h1 class="title">HyperLoon</h1>
+                              </span>
+                          </div>
+                          
+                          <div class="card-content">
+                              <p>
+                                <b>Latitude</b>: {[ coordinates[0][0] ]}, 
+                                <b>Longitude</b>: {[ coordinates[0][1] ]}
+                              </p>
+                          </div>
+                          
+                          <div class="card-action">
+                              <a href="" ng-click="zoomIn()">Zoom In</a>
+                              <a href="" ng-click="zoomOut()">Zoom Out</a>
+                              <a href="" ng-click="getLocation()">
+                                <!-- <button class="btn btn-sm btn-primary"> -->
+                                  Find me
+                                <!-- </button> -->
+                              </a>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card">
+                      <div class="card-image">
+                        <img class="img-responsive" src="http://172.20.10.8:9000/?action=snapshot&n={[ time ]}">
+                      </div>
+                      <div class="card-content">
+                        <div class="row">
+                          <div class="col-md-12">
+                            <b>GPS</b>: {[ gps.replace(",", ", ") ]}<br>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-6">
+                            <b>Wind</b>: {[ wind ]}<br>
+                            <b>Temperature</b>: {[ temperature ]}<br>
+                          </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <b>Barometer</b>: {[ barometer ]}<br>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="card-action">
+                          <a href="" ng-click="startStream()" ng-if="!streamStatus">
+                            <button class="btn btn-primary">
+                              Start Stream
+                            </button>
+                          </a>
+                          <a href="" ng-click="stopStream()" ng-if="streamStatus">
+                            <button class="btn btn-danger">
+                              Stop Stream
+                            </button>
+                          </a>
+                      </div>
+                    </div>
+                </div>
+              </div>
+          </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

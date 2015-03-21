@@ -1,0 +1,20 @@
+.outro{
+	transition: 1s all;
+	opacity: 0;
+	transform: scale(0, 0);
+}
+
+#splash{
+	display: table;
+	width: 100%;
+}
+
+#splash .row{
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
+}
+
+#splash-content{
+	padding: 100px;
+}

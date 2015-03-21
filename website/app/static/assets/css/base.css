@@ -1,0 +1,70 @@
+.top-buffer{
+	margin-top: 20px;
+}
+
+.nomargin{
+	margin: 0;
+}
+
+.nopad{
+	padding: 0;
+}
+
+.very-tall{
+	height: 100vh;
+}
+
+.tall{
+	height: 100%;
+}
+
+.fat{
+	width: 100%;
+}
+
+.very-fat{
+	width: 100vw;
+}
+
+.animate{
+	transition: 0.2s all;
+}
+
+.absolute-center-wrapper{
+	width: 100vw;
+	height: 100vh;
+	display: table;
+}
+
+.absolute-center{
+	display: table-cell;
+	text-align: center;
+	vertical-align: middle;
+}
+
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+ 
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+ 
+ 
+.spin {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+#loading-icon{
+  font-size: 50px;
+}
+
+.hidden{
+	opacity: 0;
+	visibility: hidden;
+	z-index: -9999999999;
+}
