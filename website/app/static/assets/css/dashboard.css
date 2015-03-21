@@ -24,6 +24,7 @@
   overflow: hidden;
 }
 .card .card-image img {
+  min-height: 500px;
   border-radius: 2px 2px 0 0;
   background-clip: padding-box;
   position: relative;

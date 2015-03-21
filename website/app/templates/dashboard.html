@@ -64,7 +64,7 @@
                   $scope.time++;
                   $scope.coordinates.push($scope.gps.replace(", ", ","))
                   console.log(getLocation());
-              }, 1000);
+              },2500);
               $scope.streamStatus = true;
             }).
             error(function(data, status, headers, config) {
@@ -72,7 +72,7 @@
               var status_refresh = $interval(function() {
                   $scope.time++;
                   $scope.coordinates.push($scope.gps.replace(", ", ","))
-              }, 1000);
+              },2500);
               $scope.streamStatus = true;
               // $scope.streamStatus = false;
             });
@@ -136,7 +136,7 @@
                   <div class="col-md-6">
                       <div class="card">
                           <div class="card-image">
-                              <img class="img-responsive" src="https://maps.googleapis.com/maps/api/staticmap?{[ mapParameters() ]}">
+                              <img class="img-responsive" style="background-size: contain !important; background-repeat: no-repeat; background: url(http://placehold.it/640x640&text=live+google+map+tracking)" src="https://maps.googleapis.com/maps/api/staticmap?{[ mapParameters() ]}">
                               <span class="card-title">
                                 <h1 class="title">HyperLoon</h1>
                               </span>
@@ -163,7 +163,7 @@
                   <div class="col-md-6">
                     <div class="card">
                       <div class="card-image">
-                        <img class="img-responsive" src="http://172.20.10.8:9000/?action=snapshot&n={[ time ]}">
+                        <img class="img-responsive" style="background-size: contain !important; background-repeat: no-repeat; background: url(http://placehold.it/640x640&text=live+camera+feed)" src="http://172.20.10.8:9000/?action=snapshot&n={[ time ]}">
                       </div>
                       <div class="card-content">
                         <div class="row">
@@ -175,12 +175,8 @@
                           <div class="col-md-6">
                             <b>Wind</b>: {[ wind ]}<br>
                             <b>Temperature</b>: {[ temperature ]}<br>
+                              <b>Barometer</b>: {[ barometer ]}<br>
                           </div>
-                            <div class="row">
-                              <div class="col-md-6">
-                                <b>Barometer</b>: {[ barometer ]}<br>
-                              </div>
-                            </div>
                         </div>
                       </div>
                       <div class="card-action">
