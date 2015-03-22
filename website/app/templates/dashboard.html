@@ -13,20 +13,6 @@
                               // ["40.752946","-73.987384"], 
                               // ["40.755823","-73.986397"]
                              ];
-        $scope.onKeyup = function (evt, val) {
-                if(evt.keyCode === 40) {
-                    --$scope[val];
-                    console.log("decrementing val");
-                } else if (evt.keyCode === 38) {
-                    ++$scope[val]
-                    console.log("incrementing val");
-                }
-            };
-
-        $scope.onKeyupCoordinates = function(evt, val) {
-            if(evt.keyCode === 40) --$scope.coordinates[0][val];
-            else if (evt.keyCode === 38) ++scope.coordinates[0][val];
-        };
         $scope.zoom = 18;
         $scope.time = 0;
         $scope.mapParameters = function() {
@@ -35,8 +21,9 @@
                                    "size=640x640" + "&" + 
                                    "markers=color:blue" + "|" + 
                                    "" + "|" + $scope.coordinates[$scope.coordinates.length - 1] + "&" + 
-                                   "path=color:0x000000ff|weight:5|" + $scope.coordinates.join("|");
+                                   "path=color:red|weight:5|" + $scope.coordinates.slice(Math.max($scope.coordinates.length - 10, 1)).join("|");
                                };
+
        $scope.streamStatus = false;
        $scope.gps = getInfo("gps") || getLocation() || "30.444836199999997,-84.2996848";
        $scope.temperature = getInfo("temperature") || 0;
@@ -46,11 +33,20 @@
        $scope.stopStream = stopStream;
        $scope.startStream = startStream;
 
+       $scope.zoomIn = function(){if ($scope.zoom < 22) $scope.zoom++;}
+       $scope.zoomOut = function(){if ($scope.zoom > 1) $scope.zoom--;}
+       $scope.getLocation = getLocation;
+
+       $scope.cameraFeed = function () {
+         return "http://192.168.43.73:9000/?action=snapshot&n=" + $scope.time;
+       }
+
        function getLocation() {
            if (navigator.geolocation) {
                return navigator.geolocation.getCurrentPosition(showPosition);
            }
        }
+
        function showPosition(position) {
            $scope.coordinates[0][0] = position.coords.latitude
            $scope.coordinates[0][1] = position.coords.longitude;
@@ -58,28 +54,18 @@
        }
 
        function startStream(){
-          $http.post('http://172.20.10.8/start_stream', {}).
+          $http.post('http://192.168.43.73/start_stream', {}).
             success(function(data, status, headers, config) {
-              var status_refresh = $interval(function() {
-                  $scope.time++;
-                  $scope.coordinates.push($scope.gps.replace(", ", ","))
-                  console.log(getLocation());
-              },2500);
               $scope.streamStatus = true;
             }).
             error(function(data, status, headers, config) {
-              // if(stream_refresh) stream_refresh.cancel();
-              var status_refresh = $interval(function() {
-                  $scope.time++;
-                  $scope.coordinates.push($scope.gps.replace(", ", ","))
-              },2500);
-              $scope.streamStatus = true;
-              // $scope.streamStatus = false;
+              console.log('error starting stream')
+              $scope.streamStatus = false
             });
        }
 
        function stopStream(){
-          $http.post('http://172.20.10.8/stop_stream', {}).
+          $http.post('http://192.168.43.73/stop_stream', {}).
             success(function(data, status, headers, config) {
               stream_refresh.cancel();
               $scope.streamStatus = false;
@@ -91,7 +77,7 @@
        }
 
        function getInfo (metric) {
-         $http.get('http://172.20.10.8/' + metric, {}).
+         $http.get('/' + metric + '?n=' + $scope.time, {}).
           success(function(data, status, headers, config){
             $scope[metric] = data;
           }).
@@ -100,17 +86,21 @@
           })
        }
 
-       $scope.zoomIn = function(){
-        if ($scope.zoom < 22) $scope.zoom++;
-       }
-
-       $scope.zoomOut = function(){
-        if ($scope.zoom > 1) $scope.zoom--;
-       }
-
        function activate(){
          getLocation();
-         startStream();
+         // startStream();
+         
+         var status_refresh = $interval(function() {
+             $scope.coordinates.push($scope.gps.replace(", ", ","))
+             $scope.gps = getInfo("gps") || getLocation() || "30.444836199999997,-84.2996848";
+             $scope.temperature = getInfo("temperature") || 0;
+             $scope.wind = getInfo("wind") || 0;
+             $scope.barometer = getInfo("barometer") || 0;
+         }, 1000);
+
+         var camera_refresh = $interval(function(){
+            $scope.time++
+         }, 500)
        }
 
        activate();
@@ -128,75 +118,75 @@
   </div>
 </div>
 
-<div class="container-fluid nomargin nopad very-tall very-fat" ng-app="hyperloon">
-    <div ng-controller="core">
-          <div class="container">
-              <div class="row">
-                  <!-- Card Projects -->
-                  <div class="col-md-6">
-                      <div class="card">
+
+<div class="vertical-center-wrapper">
+  <div class="vertical-center">
+    <div class="container-fluid nomargin nopad very-tall very-fat" ng-app="hyperloon">
+        <div ng-controller="core">
+              <div class="container">
+                  <div class="row">
+                      <!-- Card Projects -->
+                      <div class="col-md-6">
+                          <div class="card">
+                              <div class="card-image">
+                                  <img class="img-responsive" style="background-size: contain !important; background-repeat: no-repeat; background: url(http://placehold.it/640x640&text=live+google+map+tracking)" src="https://maps.googleapis.com/maps/api/staticmap?{[ mapParameters() ]}&key=AIzaSyBW136ww5jq6Je4vgc28oXx1DPz-hDOirw">
+                                  <span class="card-title">
+                                    <h1 class="title">HyperLoon</h1>
+                                  </span>
+                              </div>
+                              
+                              <div class="card-content">
+                                  <p>
+                                    <b>Latitude</b>: {[ gps.replace(" ", "").split(",")[0] ]}, 
+                                    <b>Longitude</b>: {[ gps.replace(" ", "").split(",")[1] ]}
+                                  </p>
+                              </div>
+                              
+                              <div class="card-action">
+                                  <a href="" ng-click="zoomIn()">Zoom In</a>
+                                  <a href="" ng-click="zoomOut()">Zoom Out</a>
+                                  <a href="" ng-click="getLocation()">
+                                    <!-- <button class="btn btn-sm btn-primary"> -->
+                                      Find me
+                                    <!-- </button> -->
+                                  </a>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="card">
                           <div class="card-image">
-                              <img class="img-responsive" style="background-size: contain !important; background-repeat: no-repeat; background: url(http://placehold.it/640x640&text=live+google+map+tracking)" src="https://maps.googleapis.com/maps/api/staticmap?{[ mapParameters() ]}">
-                              <span class="card-title">
-                                <h1 class="title">HyperLoon</h1>
-                              </span>
+                            <img class="img-responsive" src="http://192.168.43.73:9000/?action=snapshot&n={[ time ]}">
                           </div>
-                          
                           <div class="card-content">
-                              <p>
-                                <b>Latitude</b>: {[ coordinates[0][0] ]}, 
-                                <b>Longitude</b>: {[ coordinates[0][1] ]}
-                              </p>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <b>Wind</b>: {[ wind ]}<br>
+                                <b>Temperature</b>: {[ temperature ]}<br>
+                                  <b>Barometer</b>: {[ barometer ]}<br>
+                              </div>
+                            </div>
                           </div>
-                          
                           <div class="card-action">
-                              <a href="" ng-click="zoomIn()">Zoom In</a>
-                              <a href="" ng-click="zoomOut()">Zoom Out</a>
-                              <a href="" ng-click="getLocation()">
-                                <!-- <button class="btn btn-sm btn-primary"> -->
-                                  Find me
-                                <!-- </button> -->
+                              <a href="" ng-click="startStream()" ng-if="!streamStatus">
+                                <button class="btn btn-primary">
+                                  Start Stream
+                                </button>
+                              </a>
+                              <a href="" ng-click="stopStream()" ng-if="streamStatus">
+                                <button class="btn btn-danger">
+                                  Stop Stream
+                                </button>
                               </a>
                           </div>
-                      </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="card">
-                      <div class="card-image">
-                        <img class="img-responsive" style="background-size: contain !important; background-repeat: no-repeat; background: url(http://placehold.it/640x640&text=live+camera+feed)" src="http://172.20.10.8:9000/?action=snapshot&n={[ time ]}">
-                      </div>
-                      <div class="card-content">
-                        <div class="row">
-                          <div class="col-md-12">
-                            <b>GPS</b>: {[ gps.replace(",", ", ") ]}<br>
-                          </div>
                         </div>
-                        <div class="row">
-                          <div class="col-md-6">
-                            <b>Wind</b>: {[ wind ]}<br>
-                            <b>Temperature</b>: {[ temperature ]}<br>
-                              <b>Barometer</b>: {[ barometer ]}<br>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-action">
-                          <a href="" ng-click="startStream()" ng-if="!streamStatus">
-                            <button class="btn btn-primary">
-                              Start Stream
-                            </button>
-                          </a>
-                          <a href="" ng-click="stopStream()" ng-if="streamStatus">
-                            <button class="btn btn-danger">
-                              Stop Stream
-                            </button>
-                          </a>
-                      </div>
                     </div>
-                </div>
+                  </div>
               </div>
-          </div>
+            </div>
         </div>
     </div>
+  </div>
 </div>
 
 {% endblock %}

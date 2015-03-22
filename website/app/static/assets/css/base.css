@@ -42,6 +42,15 @@
 	vertical-align: middle;
 }
 
+.vertical-center-wrapper{
+	display: table;
+}
+
+.vertical-center{
+	display: table-cell;
+	vertical-align: middle;
+}
+
 
 @-webkit-keyframes spin2 {
     from { -webkit-transform: rotate(0deg);}
